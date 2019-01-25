@@ -61,7 +61,7 @@ db_type = 'STG'
 # ------------------------------------------------------------------------------
 
 # Import Python libraries
-import arcpy, datetime
+import arcpy, datetime, smtplib
 from datetime import timedelta
 
 ### Setup constraints on looking back and dates
@@ -211,9 +211,9 @@ def check_for_existance(conn_string, target_db, item_to_check):
         try:
             delete_existing_layer(conn_string, target_db, item_to_check)
             print "Leaving Check For Existing Layer----"
-        except Exception as err_check_for_existance:
-            print(err_check_for_existance.args[0])
-            print "Leaving Check For Existing Layer----"
+        except Exception as error_check_for_existance:
+            print "Status:  Failure!"
+            print(error_check_for_existance.args[0])
 
         return
 
@@ -258,10 +258,16 @@ def copy_layer_over (input_connection, output_connection, target_db, pub_layerfu
 
         print "Layer successfully copied to " + output_connection
 
-    except Exception as err_copy_layer_over:
-        print(err_copy_layer_over.args[0])
+    except Exception as error_copy_layer_over_step1:
+        print "Status:  Failure!"
+        print(error_copy_layer_over_step1.args[0])
 
-    arcpy.RecalculateFeatureClassExtent_management(output_connection)
+    try:
+         arcpy.RecalculateFeatureClassExtent_management(output_connection)
+
+    except Exception as error_copy_layer_over_step2:
+        print "Status:  Failure!"
+        print(error_copy_layer_over_step2.args[0])
 
     print "Leaving Copy Layer----"
 
@@ -285,10 +291,16 @@ def copy_layer_over_PR (input_connection, output_connection, target_db, pub_laye
         print "Layer successfully copied to " + output_connection
         print pub_layerfullname + " has successfully been published to its target destination of " + target_db + " on " + pub_targetdb_type + "."
 
-    except Exception as err_copy_layer_over_PR:
-        print(err_copy_layer_over_PR.args[0])
+    except Exception as error_copy_layer_over_PR_step1:
+        print "Status:  Failure!"
+        print(error_copy_layer_over_PR_step1.args[0])
 
-    arcpy.RecalculateFeatureClassExtent_management(output_connection)
+    try:
+        arcpy.RecalculateFeatureClassExtent_management(output_connection)
+
+    except Exception as error_copy_layer_over_PR_step2:
+        print "Status:  Failure!"
+        print(error_copy_layer_over_PR_step2.args[0])
 
     print "Leaving Copy Projection----"
 
@@ -318,7 +330,6 @@ def step_counter (db_connection, current_db, db_type, source_LayerFullName):
     print current_db
     db_type_sql = "'{0}'".format(db_type)
     print db_type
-    print db_type_sql
     source_LayerFullName_sql = "'{0}'".format(source_LayerFullName)
     print source_LayerFullName
 
@@ -376,7 +387,7 @@ if updatecnt > 0:
         max_loop = step_count
 
         current_step = 1
-        print "Max Loop:  {0}".format(max_loop)
+        print max_loop
         while current_step <= max_loop:
             check_pub_status(db_connection, current_db, db_type, source_LayerFullName, current_step)
 
@@ -429,9 +440,8 @@ if updatecnt > 0:
 
                         set_current_database(db_connection)
 
-                    except Exception as err:
+                    except:
                         print "!!!!!!!!Failure to process {0}".format(pub_layerfullname)
-                        print(err.args[0])
                         set_current_database(db_connection)
 
                 else:
@@ -465,11 +475,6 @@ if updatecnt > 0:
 
 else:
     print "No updates required.  Terminating connections."
-
-
-
-
-
 
 
 
